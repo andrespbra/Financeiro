@@ -74,7 +74,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching contracts from Supabase:', error);
+      console.warn('Error fetching contracts from Supabase:', error);
       throw error;
     }
 
@@ -92,7 +92,7 @@ export const supabaseService = {
       .upsert(dbData, { onConflict: 'id' });
 
     if (error) {
-      console.error('Error upserting contract to Supabase:', error);
+      console.warn('Error upserting contract to Supabase:', error);
       throw error;
     }
   },
@@ -108,7 +108,7 @@ export const supabaseService = {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting contract from Supabase:', error);
+      console.warn('Error deleting contract from Supabase:', error);
       throw error;
     }
   },
@@ -125,7 +125,7 @@ export const supabaseService = {
       .order('date_launched', { ascending: false });
 
     if (error) {
-      console.error('Error fetching ledger entries from Supabase:', error);
+      console.warn('Error fetching ledger entries from Supabase:', error);
       throw error;
     }
 
@@ -143,7 +143,7 @@ export const supabaseService = {
       .upsert(dbData, { onConflict: 'id' });
 
     if (error) {
-      console.error('Error upserting ledger entry to Supabase:', error);
+      console.warn('Error upserting ledger entry to Supabase:', error);
       throw error;
     }
   },
@@ -159,7 +159,39 @@ export const supabaseService = {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting ledger entry from Supabase:', error);
+      console.warn('Error deleting ledger entry from Supabase:', error);
+      throw error;
+    }
+  },
+
+  async truncateLedgerEntries(): Promise<void> {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    const { error } = await supabase
+      .from('ledger_entries')
+      .delete()
+      .neq('id', '_none_');
+
+    if (error) {
+      console.warn('Error clearing all ledger entries from Supabase:', error);
+      throw error;
+    }
+  },
+
+  async truncateContracts(): Promise<void> {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    const { error } = await supabase
+      .from('contracts')
+      .delete()
+      .neq('id', '_none_');
+
+    if (error) {
+      console.warn('Error clearing all contracts from Supabase:', error);
       throw error;
     }
   },
@@ -184,7 +216,7 @@ export const supabaseService = {
         .upsert(dbContracts, { onConflict: 'id' });
 
       if (contractError) {
-        console.error('Error syncing contracts to Supabase:', contractError);
+        console.warn('Error syncing contracts to Supabase:', contractError);
         throw contractError;
       }
       contractsSyncedCount = localContracts.length;
@@ -198,7 +230,7 @@ export const supabaseService = {
         .upsert(dbLedger, { onConflict: 'id' });
 
       if (ledgerError) {
-        console.error('Error syncing ledger entries to Supabase:', ledgerError);
+        console.warn('Error syncing ledger entries to Supabase:', ledgerError);
         throw ledgerError;
       }
       ledgerSyncedCount = localLedger.length;

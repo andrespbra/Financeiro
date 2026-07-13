@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Sparkles,
   ArrowUpRight,
+  Trash2,
 } from 'lucide-react';
 
 export default function App() {
@@ -74,7 +75,7 @@ export default function App() {
           setLedger(dbLedger);
           addToast('Dados sincronizados com o Supabase com sucesso!', 'success');
         } catch (error) {
-          console.error('Falha ao carregar dados do Supabase:', error);
+          console.warn('Falha ao carregar dados do Supabase:', error);
           addToast('Não foi possível obter os dados do Supabase. Usando cache local do navegador.', 'error');
         } finally {
           setIsLoading(false);
@@ -112,7 +113,7 @@ export default function App() {
       setContracts(dbContracts);
       setLedger(dbLedger);
     } catch (error) {
-      console.error(error);
+      console.warn('Erro ao sincronizar os dados locais:', error);
       addToast('Ocorreu um erro ao sincronizar os dados locais com o Supabase.', 'error');
     } finally {
       setIsSyncing(false);
@@ -380,6 +381,35 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
     }
   };
 
+  const handleClearAllData = async () => {
+    if (window.confirm('ATENÇÃO: Isso excluirá permanentemente TODOS os contratos e lançamentos do cache local do seu navegador! Deseja continuar?')) {
+      if (isSupabaseConfigured) {
+        if (window.confirm('Você também gostaria de tentar remover estes dados do banco de dados conectado no Supabase? (Clique em "OK" para remover também do Supabase, ou "Cancelar" para limpar apenas localmente)')) {
+          setIsLoading(true);
+          try {
+            // Deletar de forma otimizada e em ordem de dependência (primeiro os lançamentos/transações, depois os contratos)
+            await supabaseService.truncateLedgerEntries();
+            await supabaseService.truncateContracts();
+            addToast('Todos os dados foram excluídos com sucesso localmente e no Supabase!', 'success');
+          } catch (err) {
+            addToast('Dados excluídos localmente, mas ocorreu uma falha ao remover todos os itens do Supabase.', 'error');
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          addToast('Dados do cache local limpos com sucesso! O banco do Supabase permaneceu inalterado.', 'success');
+        }
+      } else {
+        addToast('Todos os dados locais fictícios foram excluídos com sucesso!', 'success');
+      }
+      
+      setContracts([]);
+      setLedger([]);
+      localStorage.removeItem('finance_contracts');
+      localStorage.removeItem('finance_ledger');
+    }
+  };
+
   const totalActiveContractsCount = contracts.filter(c => c.status === 'ativo').length;
   const currentMonthRevenue = ledger
     .filter(item => item.type === 'receita' && item.month === '2026-07')
@@ -532,6 +562,18 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                 </button>
               </div>
             )}
+          </div>
+
+          {/* GERENCIAMENTO DE DADOS / LIMPEZA */}
+          <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+            <div className="text-[11px] font-bold text-slate-400 uppercase px-2">Limpeza de Dados</div>
+            <button
+              onClick={handleClearAllData}
+              className="w-full py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 rounded-xl text-xs font-semibold text-center transition-all flex items-center justify-center gap-2 cursor-pointer border border-rose-100"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Zerar Dados do Sistema
+            </button>
           </div>
         </aside>
 
