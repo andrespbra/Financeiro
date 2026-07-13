@@ -1,0 +1,6 @@
+{
+  "name": "Gestão Financeira de Contratos",
+  "description": "Sistema financeiro para gestão de contratos fixos (receitas, funcionários, impostos, notas fiscais), planilha estruturada e fluxo de caixa consolidado com margem de lucro.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
