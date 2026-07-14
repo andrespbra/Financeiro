@@ -34,9 +34,10 @@ import {
 interface DashboardProps {
   ledger: LedgerEntry[];
   contracts: Contract[];
+  onBulkProvision?: (contract: Contract, month: string, skipConfirm?: boolean) => void;
 }
 
-export default function Dashboard({ ledger, contracts }: DashboardProps) {
+export default function Dashboard({ ledger, contracts, onBulkProvision }: DashboardProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>('todos');
 
   // Obter todos os meses disponíveis para o filtro
@@ -213,6 +214,26 @@ export default function Dashboard({ ledger, contracts }: DashboardProps) {
     };
   }, [filteredLedger]);
 
+  // Verificar contratos ativos que não possuem lançamentos no período selecionado ou no mês atual
+  const unprovisionedInfo = useMemo(() => {
+    const d = new Date();
+    const currentMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const targetMonth = selectedMonth === 'todos' ? currentMonthStr : selectedMonth;
+
+    const unprovisioned = contracts.filter((contract) => {
+      if (contract.status !== 'ativo') return false;
+      const hasEntries = ledger.some(
+        (item) => item.contractId === contract.id && item.month === targetMonth
+      );
+      return !hasEntries;
+    });
+
+    return {
+      targetMonth,
+      list: unprovisioned,
+    };
+  }, [contracts, ledger, selectedMonth]);
+
   return (
     <div className="space-y-6">
       {/* Top Bar with Filter */}
@@ -253,6 +274,63 @@ export default function Dashboard({ ledger, contracts }: DashboardProps) {
           </select>
         </div>
       </div>
+
+      {/* Alerta de Contratos não provisionados */}
+      {unprovisionedInfo.list.length > 0 && (
+        <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4.5 space-y-3.5 shadow-xs transition-all">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-bold text-amber-900 text-sm">
+                Contratos Fixos Pendentes de Lançamento em {(() => {
+                  const [year, m] = unprovisionedInfo.targetMonth.split('-');
+                  const monthNames = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                  ];
+                  return `${monthNames[parseInt(m, 10) - 1]} de ${year}`;
+                })()}
+              </h4>
+              <p className="text-xs text-amber-700 leading-relaxed font-medium">
+                Você possui <span className="font-bold text-amber-800">{unprovisionedInfo.list.length} contrato(s) ativo(s)</span> cujos valores mensais recorrentes (faturamento e despesas estimadas) <span className="font-bold text-amber-900">não foram lançados na planilha ainda</span> para este mês. Por isso, as faturas e despesas deles não aparecem nos KPIs de Fluxo de Caixa acima.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 items-center sm:pl-8">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mr-1">Lançar faturamento e despesas:</span>
+            {onBulkProvision ? (
+              <div className="flex flex-wrap gap-2">
+                {unprovisionedInfo.list.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => onBulkProvision(c, unprovisionedInfo.targetMonth, true)}
+                    className="bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-250 hover:border-emerald-300 text-xs font-bold py-1.5 px-3 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                    title={`Lançar faturamento e despesas do contrato "${c.name}"`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    Lançar {c.name}
+                  </button>
+                ))}
+                <button
+                  onClick={async () => {
+                    if (window.confirm(`Deseja lançar os valores de todos os ${unprovisionedInfo.list.length} contratos pendentes para ${unprovisionedInfo.targetMonth}?`)) {
+                      for (const c of unprovisionedInfo.list) {
+                        await onBulkProvision(c, unprovisionedInfo.targetMonth, true);
+                      }
+                    }
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white border border-transparent text-xs font-bold py-1.5 px-3.5 rounded-lg transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                >
+                  Lançar Todos os {unprovisionedInfo.list.length}
+                </button>
+              </div>
+            ) : (
+              <span className="text-xs text-slate-400">Vá para a aba de Contratos para realizar o provisionamento.</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

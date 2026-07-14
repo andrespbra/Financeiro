@@ -19,10 +19,10 @@ import {
 
 interface ContractsSectionProps {
   contracts: Contract[];
-  onAddContract: (contract: Contract) => void;
+  onAddContract: (contract: Contract, autoProvisionMonth?: string) => void;
   onUpdateContract: (contract: Contract) => void;
   onDeleteContract: (id: string) => void;
-  onBulkProvision: (contract: Contract, month: string) => void;
+  onBulkProvision: (contract: Contract, month: string, skipConfirm?: boolean) => void;
 }
 
 export default function ContractsSection({
@@ -54,6 +54,7 @@ export default function ContractsSection({
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
   const [status, setStatus] = useState<'ativo' | 'inativo'>('ativo');
+  const [autoProvision, setAutoProvision] = useState(true);
 
   const resetForm = () => {
     setName('');
@@ -64,6 +65,7 @@ export default function ContractsSection({
     setDescription('');
     setStartDate(new Date().toISOString().substring(0, 7));
     setStatus('ativo');
+    setAutoProvision(true);
     setIsEditing(false);
     setEditId('');
   };
@@ -106,7 +108,7 @@ export default function ContractsSection({
     if (isEditing) {
       onUpdateContract(contractData);
     } else {
-      onAddContract(contractData);
+      onAddContract(contractData, autoProvision ? startDate : undefined);
     }
     setIsAddOpen(false);
     resetForm();
@@ -423,6 +425,22 @@ export default function ContractsSection({
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium resize-none"
                 />
               </div>
+
+              {/* Opção para auto-provisionamento */}
+              {!isEditing && (
+                <div className="flex items-start gap-2.5 p-3 bg-blue-50/70 border border-blue-100 rounded-lg text-xs font-semibold text-blue-800 transition-all">
+                  <input
+                    type="checkbox"
+                    id="auto-provision-checkbox"
+                    checked={autoProvision}
+                    onChange={(e) => setAutoProvision(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer mt-0.5"
+                  />
+                  <label htmlFor="auto-provision-checkbox" className="cursor-pointer select-none leading-relaxed">
+                    Gerar e provisionar lançamentos (receitas e despesas) automaticamente na planilha para o mês de início ({startDate || 'mês selecionado'})
+                  </label>
+                </div>
+              )}
 
               {/* Action buttons */}
               <div className="flex gap-3 justify-end pt-3 border-t border-slate-100">

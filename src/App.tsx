@@ -236,7 +236,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
   };
 
   // --- HANDLERS PARA CONTRATOS ---
-  const handleAddContract = async (newContract: Contract) => {
+  const handleAddContract = async (newContract: Contract, autoProvisionMonth?: string) => {
     setContracts((prev) => [newContract, ...prev]);
     if (dbConfig.isConfigured) {
       try {
@@ -247,6 +247,10 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
       }
     } else {
       addToast(`Contrato "${newContract.name}" cadastrado localmente!`, 'success');
+    }
+
+    if (autoProvisionMonth) {
+      await handleBulkProvision(newContract, autoProvisionMonth, true);
     }
   };
 
@@ -293,13 +297,13 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
   };
 
   // Provisionamento em Lote de um contrato fixo para um determinado mês
-  const handleBulkProvision = async (contract: Contract, month: string) => {
+  const handleBulkProvision = async (contract: Contract, month: string, skipConfirm = false) => {
     // Verificar se já existe lançamento para este contrato no mês selecionado (para evitar duplicidade acidental)
     const alreadyHasEntries = ledger.some(
       (item) => item.contractId === contract.id && item.month === month
     );
 
-    if (alreadyHasEntries) {
+    if (alreadyHasEntries && !skipConfirm) {
       const confirm = window.confirm(
         `Já existem lançamentos para o contrato "${contract.name}" em ${month}.\nDeseja gerar novos lançamentos duplicados para este período?`
       );
@@ -726,7 +730,11 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <Dashboard ledger={ledger} contracts={contracts} />
+                  <Dashboard 
+                    ledger={ledger} 
+                    contracts={contracts} 
+                    onBulkProvision={handleBulkProvision} 
+                  />
                 </motion.div>
               )}
 
