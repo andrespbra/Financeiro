@@ -43,6 +43,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   // Configuração dinâmica do banco de dados Supabase
   const [dbConfig, setDbConfig] = useState(() => getSupabaseConfig());
@@ -123,6 +124,7 @@ export default function App() {
     async function fetchDatabaseData() {
       if (dbConfig.isConfigured) {
         setIsLoading(true);
+        setDbError(null);
         try {
           const dbContracts = await supabaseService.getContracts();
           const dbLedger = await supabaseService.getLedgerEntries();
@@ -130,12 +132,24 @@ export default function App() {
           setContracts(dbContracts);
           setLedger(dbLedger);
           addToast(`Dados sincronizados com o Supabase (${dbConfig.source === 'local' ? 'Customizado' : 'Sistema'})!`, 'success');
-        } catch (error) {
+        } catch (error: any) {
           console.warn('Falha ao carregar dados do Supabase:', error);
-          addToast('Não foi possível obter dados da nuvem. Verifique suas credenciais e tabelas.', 'error');
+          const errMsg = error?.message || String(error);
+          setDbError(errMsg);
+          
+          // Check for missing tables (PostgREST relation does not exist error)
+          if (errMsg.toLowerCase().includes('relation') && errMsg.toLowerCase().includes('does not exist')) {
+            addToast('Não foi possível obter dados da nuvem: Tabelas não encontradas no seu Supabase. Siga as instruções no painel de configurações para criar as tabelas.', 'error');
+          } else if (errMsg.includes('API key') || errMsg.includes('JWT') || error?.status === 401 || error?.status === 403) {
+            addToast('Não foi possível conectar: Chave Anon Key do Supabase inválida ou expirada.', 'error');
+          } else {
+            addToast('Não foi possível obter dados do Supabase. Usando cache local do navegador.', 'error');
+          }
         } finally {
           setIsLoading(false);
         }
+      } else {
+        setDbError(null);
       }
     }
     fetchDatabaseData();
@@ -579,21 +593,41 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
             <div className="text-[11px] font-bold text-slate-400 uppercase px-2">Nuvem & Banco</div>
             
             {dbConfig.isConfigured ? (
-              <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-100 text-slate-800 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
-                  <Database className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Supabase Ativo {dbConfig.source === 'local' && '(Custom)'}</span>
+              dbError ? (
+                <div className="p-3.5 bg-rose-50 rounded-xl border border-rose-100 text-slate-800 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-800">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>Erro no Supabase {dbConfig.source === 'local' && '(Custom)'}</span>
+                  </div>
+                  <p className="text-[10px] text-rose-700 leading-relaxed font-bold">
+                    {dbError.toLowerCase().includes('relation') && dbError.toLowerCase().includes('does not exist')
+                      ? 'Tabelas não encontradas no seu banco de dados Supabase! Você precisa executar o script de criação.'
+                      : `Falha na sincronização: ${dbError}`}
+                  </p>
+                  <button
+                    onClick={() => setIsConfigModalOpen(true)}
+                    className="w-full text-left text-[10px] font-bold text-rose-800 hover:text-rose-950 flex items-center gap-1 cursor-pointer underline decoration-dotted"
+                  >
+                    Ver etapas de solução <ArrowUpRight className="w-3 h-3" />
+                  </button>
                 </div>
-                <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
-                  Contratos e planilhas estão persistidos em nuvem no PostgreSQL do Supabase.
-                </p>
-                <button
-                  onClick={() => setIsConfigModalOpen(true)}
-                  className="w-full text-left text-[10px] font-bold text-emerald-700 hover:text-emerald-950 flex items-center gap-1 cursor-pointer"
-                >
-                  Configurações <ArrowUpRight className="w-3 h-3" />
-                </button>
-              </div>
+              ) : (
+                <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-100 text-slate-800 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
+                    <Database className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Supabase Ativo {dbConfig.source === 'local' && '(Custom)'}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
+                    Contratos e planilhas estão persistidos em nuvem no PostgreSQL do Supabase.
+                  </p>
+                  <button
+                    onClick={() => setIsConfigModalOpen(true)}
+                    className="w-full text-left text-[10px] font-bold text-emerald-700 hover:text-emerald-950 flex items-center gap-1 cursor-pointer"
+                  >
+                    Configurações <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </div>
+              )
             ) : (
               <div className="p-3.5 bg-slate-900 rounded-xl text-white space-y-2.5">
                 <div className="flex items-center gap-2 text-xs font-semibold text-blue-400">
@@ -829,23 +863,34 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto py-5 space-y-6 pr-1 scrollbar-thin">
                 
-                {/* STATUS ATUAL */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                 {/* STATUS ATUAL */}
+                <div className={`p-4 rounded-xl border ${dbError ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status da Conexão</span>
                     {dbConfig.isConfigured ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                        Ativa (Supabase - {dbConfig.source === 'local' ? 'Customizado' : 'Nuvem'})
-                      </span>
+                      dbError ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 flex items-center gap-1 animate-pulse">
+                          <XCircle className="w-3 h-3 text-rose-600" />
+                          Falha na Conexão
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          Ativa (Supabase - {dbConfig.source === 'local' ? 'Customizado' : 'Nuvem'})
+                        </span>
+                      )
                     ) : (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
                         Local Fallback (LocalStorage)
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
                     {dbConfig.isConfigured 
-                      ? `Sua aplicação está conectada com sucesso ao banco de dados Supabase (${dbConfig.source === 'local' ? 'via credenciais salvas no navegador' : 'via variáveis de ambiente'}). Todas as criações, edições e exclusões de contratos ou lançamentos serão compartilhadas instantaneamente!`
+                      ? dbError
+                        ? dbError.toLowerCase().includes('relation') && dbError.toLowerCase().includes('does not exist')
+                          ? 'ERRO DETECTADO: As tabelas "contracts" ou "ledger_entries" não existem no seu banco Supabase. Por favor, copie o Script SQL do Passo 1 abaixo e execute-o no SQL Editor do painel do seu Supabase para criar as tabelas necessárias.'
+                          : `ERRO DETECTADO: Falha ao carregar dados do Supabase. Mensagem do banco: "${dbError}". Verifique se a URL e a Chave Anon Key inseridas abaixo estão corretas e se as tabelas foram criadas.`
+                        : `Sua aplicação está conectada com sucesso ao banco de dados Supabase (${dbConfig.source === 'local' ? 'via credenciais salvas no navegador' : 'via variáveis de ambiente'}). Todas as criações, edições e exclusões de contratos ou lançamentos serão compartilhadas instantaneamente!`
                       : 'Atualmente a aplicação está em modo offline/local (salvando dados apenas no cache local deste navegador). Como cada aparelho possui seu próprio cache local, as alterações feitas no celular não aparecem no computador. Para sincronizar em tempo real em todos os seus aparelhos, insira as credenciais do seu projeto Supabase abaixo.'}
                   </p>
                 </div>

@@ -5,26 +5,52 @@ export function cleanSupabaseUrl(url: string): string {
   if (!url) return '';
   let cleaned = url.trim();
   
-  // If user pasted the rest URL containing /rest/v1, strip it
-  if (cleaned.includes('/rest/v1')) {
-    cleaned = cleaned.split('/rest/v1')[0];
+  // Strip surrounding double or single quotes if present
+  if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    cleaned = cleaned.slice(1, -1).trim();
+  }
+  
+  // Remove trailing slashes first
+  cleaned = cleaned.replace(/\/+$/, '');
+  
+  // Case-insensitive stripping of /rest/v1, /graphql, /auth/v1, /storage/v1 and everything after them
+  const lowercase = cleaned.toLowerCase();
+  const pathsToStrip = ['/rest/v1', '/graphql', '/auth/v1', '/storage/v1'];
+  
+  for (const p of pathsToStrip) {
+    const idx = lowercase.indexOf(p);
+    if (idx !== -1) {
+      cleaned = cleaned.substring(0, idx).replace(/\/+$/, '');
+      break;
+    }
   }
   
   try {
     const parsed = new URL(cleaned);
+    // If it's a standard Supabase hosted URL, return the origin
     if (parsed.hostname.endsWith('.supabase.co')) {
       return parsed.origin;
     }
-    return cleaned.replace(/\/+$/, '');
+    return cleaned;
   } catch (e) {
-    return cleaned.replace(/\/+$/, '');
+    return cleaned;
   }
+}
+
+// Helper to clean Supabase keys (strips surrounding quotes)
+export function cleanSupabaseKey(key: string): string {
+  if (!key) return '';
+  let cleaned = key.trim();
+  if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    cleaned = cleaned.slice(1, -1).trim();
+  }
+  return cleaned;
 }
 
 // Static environment fallback
 const envUrl = cleanSupabaseUrl(((import.meta as any).env.VITE_SUPABASE_URL || '').trim());
-const envKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
-const isEnvActive = !!(envUrl && envKey && envUrl !== 'your-supabase-project-url');
+const envKey = cleanSupabaseKey(((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim());
+const isEnvActive = !!(envUrl && envKey && envUrl !== 'your-supabase-project-url' && envUrl !== '');
 
 export interface SupabaseConfig {
   url: string;
@@ -37,7 +63,8 @@ export interface SupabaseConfig {
 export function getSupabaseConfig(): SupabaseConfig {
   const rawLocalUrl = (localStorage.getItem('custom_supabase_url') || '').trim();
   const localUrl = cleanSupabaseUrl(rawLocalUrl);
-  const localKey = (localStorage.getItem('custom_supabase_anon_key') || '').trim();
+  const rawLocalKey = (localStorage.getItem('custom_supabase_anon_key') || '').trim();
+  const localKey = cleanSupabaseKey(rawLocalKey);
   
   if (localUrl && localKey) {
     return {
