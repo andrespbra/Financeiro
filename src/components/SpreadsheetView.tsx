@@ -346,44 +346,47 @@ export default function SpreadsheetView({
         </div>
 
         {/* Action button cluster */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Download Template */}
-          <button
-            onClick={handleDownloadTemplateCSV}
-            title="Baixar Modelo de Planilha de Importação"
-            className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-xs rounded-lg py-2 px-3 flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <FileDown className="w-3.5 h-3.5" />
-            Modelo CSV
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full xl:w-auto">
+          {/* CSV Actions Group */}
+          <div className="grid grid-cols-3 gap-1.5 w-full sm:flex sm:items-center sm:w-auto">
+            {/* Download Template */}
+            <button
+              onClick={handleDownloadTemplateCSV}
+              title="Baixar Modelo de Planilha de Importação"
+              className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-[10px] sm:text-xs rounded-lg py-2 px-1 sm:px-3 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer text-center"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span className="truncate">Modelo</span>
+            </button>
 
-          {/* Import CSV */}
-          <label className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-xs rounded-lg py-2 px-3 flex items-center gap-1.5 transition-colors cursor-pointer">
-            <Upload className="w-3.5 h-3.5" />
-            Importar CSV
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".csv"
-              onChange={handleImportCSV}
-              className="hidden"
-            />
-          </label>
+            {/* Import CSV */}
+            <label className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-[10px] sm:text-xs rounded-lg py-2 px-1 sm:px-3 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer text-center">
+              <Upload className="w-3.5 h-3.5" />
+              <span className="truncate">Importar</span>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".csv"
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+            </label>
 
-          {/* Export CSV */}
-          <button
-            onClick={handleExportCSV}
-            disabled={filteredLedger.length === 0}
-            className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold text-xs rounded-lg py-2 px-3 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Exportar CSV
-          </button>
+            {/* Export CSV */}
+            <button
+              onClick={handleExportCSV}
+              disabled={filteredLedger.length === 0}
+              className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold text-[10px] sm:text-xs rounded-lg py-2 px-1 sm:px-3 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-center"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="truncate">Exportar</span>
+            </button>
+          </div>
 
           {/* Add Entry Button */}
           <button
             onClick={handleOpenAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg py-2 px-3 flex items-center gap-1 transition-colors cursor-pointer shadow-sm shadow-blue-100"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg py-2.5 px-4 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-blue-100"
           >
             <Plus className="w-4 h-4" />
             Novo Lançamento
@@ -528,9 +531,9 @@ export default function SpreadsheetView({
         </div>
       </div>
 
-      {/* PLANILHA DATA TABLE */}
+      {/* PLANILHA DATA TABLE (Desktop version, hidden on mobile) */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table id="financial-ledger-table" className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               <tr>
@@ -647,6 +650,104 @@ export default function SpreadsheetView({
           </table>
         </div>
 
+        {/* Mobile Cards View (Visible ONLY on mobile devices) */}
+        <div className="block md:hidden divide-y divide-slate-100 bg-white">
+          {paginatedLedger.map((item) => (
+            <div key={item.id} className="p-4 space-y-2 hover:bg-slate-50/50 transition-colors">
+              <div className="flex justify-between items-start gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-[10px] text-slate-500 font-bold font-mono bg-slate-100 px-1.5 py-0.5 rounded">{item.month}</span>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                      item.type === 'receita'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                        : 'bg-rose-50 text-rose-700 border border-rose-100'
+                    }`}>
+                      {item.type === 'receita' ? 'Receita' : 'Despesa'}
+                    </span>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border ${
+                      CATEGORY_COLORS[item.category]
+                    }`}>
+                      {CATEGORY_LABELS[item.category] || item.category}
+                    </span>
+                  </div>
+                  <div className="text-slate-800 text-xs font-bold leading-snug">
+                    {item.description}
+                  </div>
+                </div>
+                <div className={`text-right font-extrabold text-xs whitespace-nowrap ${
+                  item.type === 'receita' ? 'text-emerald-600' : 'text-red-500'
+                }`}>
+                  {item.type === 'receita' ? '+' : '-'}&nbsp;{formatCurrency(item.value)}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-xs pt-1">
+                <div className="text-slate-500 truncate text-[11px] max-w-[180px]">
+                  <span className="text-slate-400 font-bold">Contrato:</span> {item.contractName}
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenEdit(item)}
+                    title="Editar Lançamento"
+                    className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => onDeleteEntry(item.id)}
+                    title="Excluir Lançamento"
+                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {paginatedLedger.length === 0 && (
+            <div className="p-8 text-center text-slate-400 font-semibold text-xs">
+              Nenhum lançamento financeiro encontrado com os filtros atuais.
+            </div>
+          )}
+
+          {/* Mobile Summary footer totals */}
+          {filteredLedger.length > 0 && (
+            <div className="bg-slate-50 p-4 space-y-2 border-t border-slate-200">
+              <div className="flex justify-between text-xs text-slate-600 font-semibold">
+                <span>Receitas Filtro (+):</span>
+                <span className="font-bold text-emerald-600">{formatCurrency(filteredTotals.rec)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-600 font-semibold">
+                <span>Despesas Filtro (-):</span>
+                <span className="font-bold text-red-600">{formatCurrency(filteredTotals.des)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-blue-900">Saldo Consolidado</span>
+                  <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border mt-0.5 max-w-max ${
+                    filteredTotals.pct >= 35 
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                      : filteredTotals.pct >= 15 
+                      ? 'bg-amber-50 text-amber-700 border-amber-100' 
+                      : 'bg-rose-50 text-rose-700 border-rose-100'
+                  }`}>
+                    Margem: {filteredTotals.pct.toFixed(1)}%
+                  </span>
+                </div>
+                <span className={`font-black text-base ${
+                  filteredTotals.bal >= 0 ? 'text-blue-700' : 'text-rose-600'
+                }`}>
+                  {formatCurrency(filteredTotals.bal)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* PAGINATION PANEL */}
         {totalPages > 1 && (
           <div className="bg-white p-4.5 border-t border-slate-200 flex items-center justify-between">
@@ -689,8 +790,8 @@ export default function SpreadsheetView({
 
       {/* MODAL: Adicionar / Editar Lançamento */}
       {isAddOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-slate-200 overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-slate-200 overflow-hidden my-auto">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
               <h3 className="text-base font-bold text-slate-800">
                 {isEditing ? 'Editar Lançamento' : 'Novo Lançamento Financeiro'}

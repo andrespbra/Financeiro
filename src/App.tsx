@@ -452,18 +452,18 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
           </div>
 
           {/* Quick Header Stats */}
-          <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
             <div className="flex gap-6">
               <div className="flex flex-col items-end">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Receita Total (Jul)</span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold font-mono">Receita Total (Jul)</span>
                 <span className="text-base sm:text-lg font-bold text-slate-800">{formatCurrency(currentMonthRevenue)}</span>
               </div>
               <div className="flex flex-col items-end">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Despesas (Jul)</span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold font-mono">Despesas (Jul)</span>
                 <span className="text-base sm:text-lg font-bold text-rose-500">{formatCurrency(currentMonthExpense)}</span>
               </div>
-              <div className="flex flex-col items-end hidden sm:flex">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Margem Líquida</span>
+              <div className="flex flex-col items-end hidden lg:flex">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold font-mono">Margem Líquida</span>
                 <span className={`text-base sm:text-lg font-bold ${currentMonthMargin >= 30 ? 'text-emerald-500' : currentMonthMargin >= 15 ? 'text-amber-500' : 'text-rose-500'}`}>
                   {currentMonthMargin.toFixed(1)}%
                 </span>
@@ -473,58 +473,52 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
         </div>
       </header>
 
-      {/* BODY DE LAYOUT LATERAL */}
-      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto px-0 sm:px-4 lg:px-8 lg:py-6 gap-6">
+      {/* BODY DE LAYOUT LATERAL (Com padding extra na base para o Bottom Nav do mobile) */}
+      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto px-0 sm:px-4 lg:px-8 lg:py-6 gap-6 pb-24 lg:pb-0">
         
-        {/* SIDEBAR NAVIGATION */}
-        <aside className="w-full lg:w-64 bg-white lg:rounded-2xl border-b lg:border border-slate-200 p-5 flex flex-col gap-1 shrink-0 self-start">
+        {/* SIDEBAR NAVIGATION (Exclusiva para Desktop LG+) */}
+        <aside className="hidden lg:flex w-full lg:w-64 bg-white lg:rounded-2xl border-b lg:border border-slate-200 p-5 flex-col gap-1 shrink-0 self-start">
           <div className="text-[11px] font-bold text-slate-400 uppercase mb-3 px-2">Menu Principal</div>
           
-          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-none">
+          <div className="flex flex-col gap-1">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all shrink-0 cursor-pointer w-full text-left ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-all cursor-pointer w-full text-left ${
                 activeTab === 'dashboard'
-                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                  ? 'bg-blue-50 text-blue-700 font-bold'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${
-                activeTab === 'dashboard' ? 'bg-blue-600' : 'bg-slate-300'
-              }`}></span>
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
               Fluxo de Caixa
             </button>
 
             <button
               onClick={() => setActiveTab('contracts')}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all shrink-0 cursor-pointer w-full text-left ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-all cursor-pointer w-full text-left ${
                 activeTab === 'contracts'
-                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                  ? 'bg-blue-50 text-blue-700 font-bold'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${
-                activeTab === 'contracts' ? 'bg-blue-600' : 'bg-slate-300'
-              }`}></span>
+              <Briefcase className="w-4 h-4 shrink-0" />
               Contratos Fixos
             </button>
 
             <button
               onClick={() => setActiveTab('spreadsheet')}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all shrink-0 cursor-pointer w-full text-left ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-all cursor-pointer w-full text-left ${
                 activeTab === 'spreadsheet'
-                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                  ? 'bg-blue-50 text-blue-700 font-bold'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${
-                activeTab === 'spreadsheet' ? 'bg-blue-600' : 'bg-slate-300'
-              }`}></span>
+              <FileSpreadsheet className="w-4 h-4 shrink-0" />
               Planilha Geral
             </button>
           </div>
 
-          {/* PAINEL SUPABASE / VERCEL DENTRO DO MENU */}
+          {/* PAINEL SUPABASE & GERENCIAMENTO */}
           <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
             <div className="text-[11px] font-bold text-slate-400 uppercase px-2">Nuvem & Banco</div>
             
@@ -534,14 +528,14 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                   <Database className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Supabase Ativo</span>
                 </div>
-                <p className="text-[10px] text-slate-600 leading-relaxed">
-                  Os contratos e planilhas estão persistidos e sincronizados em tempo real no seu banco Postgres.
+                <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
+                  Contratos e planilhas estão persistidos em nuvem no PostgreSQL do Supabase.
                 </p>
                 <button
                   onClick={() => setIsConfigModalOpen(true)}
                   className="w-full text-left text-[10px] font-bold text-emerald-700 hover:text-emerald-950 flex items-center gap-1 cursor-pointer"
                 >
-                  Ver configurações <ArrowUpRight className="w-3 h-3" />
+                  Configurações <ArrowUpRight className="w-3 h-3" />
                 </button>
               </div>
             ) : (
@@ -550,12 +544,12 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                   <Database className="w-4 h-4 shrink-0" />
                   <span>Modo Local Ativo</span>
                 </div>
-                <p className="text-[10px] text-slate-300 leading-relaxed">
-                  Armazenamento temporário via <code className="text-blue-300 font-mono">LocalStorage</code>.
+                <p className="text-[10px] text-slate-300 leading-relaxed font-medium">
+                  Dados salvos apenas no cache local deste navegador. Conecte ao banco de nuvem.
                 </p>
                 <button
                   onClick={() => setIsConfigModalOpen(true)}
-                  className="w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold text-center transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold text-center transition-all flex items-center justify-center gap-1 cursor-pointer shadow-sm"
                 >
                   <CloudLightning className="w-3.5 h-3.5" />
                   Conectar Supabase
@@ -566,16 +560,63 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
 
           {/* GERENCIAMENTO DE DADOS / LIMPEZA */}
           <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
-            <div className="text-[11px] font-bold text-slate-400 uppercase px-2">Limpeza de Dados</div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase px-2">Ações Administrativas</div>
             <button
               onClick={handleClearAllData}
-              className="w-full py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 rounded-xl text-xs font-semibold text-center transition-all flex items-center justify-center gap-2 cursor-pointer border border-rose-100"
+              className="w-full py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 rounded-xl text-xs font-bold text-center transition-all flex items-center justify-center gap-2 cursor-pointer border border-rose-100 shadow-sm"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              Zerar Dados do Sistema
+              Zerar Dados Gerais
             </button>
           </div>
         </aside>
+
+        {/* STICKY BOTTOM NAVIGATION BAR (Exclusiva para Mobile e Tablet < LG) */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-xl px-2 py-2 flex items-center justify-around pb-safe">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'dashboard'
+                ? 'text-blue-600 font-bold'
+                : 'text-slate-500 hover:text-slate-800 font-medium'
+            }`}
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="text-[10px]">Fluxo</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('contracts')}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'contracts'
+                ? 'text-blue-600 font-bold'
+                : 'text-slate-500 hover:text-slate-800 font-medium'
+            }`}
+          >
+            <Briefcase className="w-5 h-5" />
+            <span className="text-[10px]">Contratos</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('spreadsheet')}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'spreadsheet'
+                ? 'text-blue-600 font-bold'
+                : 'text-slate-500 hover:text-slate-800 font-medium'
+            }`}
+          >
+            <FileSpreadsheet className="w-5 h-5" />
+            <span className="text-[10px]">Planilha</span>
+          </button>
+
+          <button
+            onClick={() => setIsConfigModalOpen(true)}
+            className="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer text-slate-500 hover:text-slate-800 font-medium"
+          >
+            <Database className="w-5 h-5" />
+            <span className="text-[10px]">Banco</span>
+          </button>
+        </nav>
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-0 flex flex-col">
@@ -840,6 +881,27 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                     </button>
                   </div>
                 )}
+
+                {/* MOBILE DANGER ZONE / ZONA DE PERIGO */}
+                <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Trash2 className="w-4 h-4 text-rose-600 shrink-0" />
+                    <h4 className="font-bold text-xs text-rose-850 uppercase tracking-wider">Zona de Perigo (Gerenciamento)</h4>
+                  </div>
+                  <p className="text-xs text-rose-700 leading-relaxed font-medium">
+                    Apagar todos os registros salvos localmente no seu navegador e reiniciar com os dados fictícios originais.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setIsConfigModalOpen(false);
+                      handleClearAllData();
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs transition-all cursor-pointer shadow-sm shadow-rose-100"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Zerar Todos os Dados Locais
+                  </button>
+                </div>
 
               </div>
 

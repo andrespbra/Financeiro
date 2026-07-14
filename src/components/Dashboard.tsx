@@ -255,83 +255,83 @@ export default function Dashboard({ ledger, contracts }: DashboardProps) {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Card 1: Faturamento */}
-        <div id="kpi-faturamento" className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento Total</p>
-            <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.revenue)}</p>
-            <span className="inline-flex items-center text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              Receitas de Contratos
+        <div id="kpi-faturamento" className="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between min-w-0">
+          <div className="space-y-1 sm:space-y-2 min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Faturamento</p>
+            <p className="text-base sm:text-2xl font-black text-slate-800 tracking-tight truncate">{formatCurrency(stats.revenue)}</p>
+            <span className="inline-flex items-center text-[9px] sm:text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100 truncate max-w-full">
+              <TrendingUp className="w-2.5 h-2.5 mr-1 shrink-0" />
+              <span className="truncate">Contratos</span>
             </span>
           </div>
-          <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-lg">
-            <DollarSign className="w-6 h-6" />
+          <div className="hidden sm:block p-3 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-lg shrink-0">
+            <DollarSign className="w-5 h-5" />
           </div>
         </div>
 
         {/* Card 2: Despesas */}
-        <div id="kpi-despesas" className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Despesas Operacionais</p>
-            <p className="text-2xl font-bold text-red-600">{formatCurrency(stats.expense)}</p>
-            <span className="inline-flex items-center text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
-              <TrendingDown className="w-3 h-3 mr-1" />
-              Custos e Impostos
+        <div id="kpi-despesas" className="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between min-w-0">
+          <div className="space-y-1 sm:space-y-2 min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Despesas</p>
+            <p className="text-base sm:text-2xl font-black text-rose-600 tracking-tight truncate">{formatCurrency(stats.expense)}</p>
+            <span className="inline-flex items-center text-[9px] sm:text-xs font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-100 truncate max-w-full">
+              <TrendingDown className="w-2.5 h-2.5 mr-1 shrink-0" />
+              <span className="truncate">Custos</span>
             </span>
           </div>
-          <div className="p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg">
-            <TrendingDown className="w-6 h-6" />
+          <div className="hidden sm:block p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg shrink-0">
+            <TrendingDown className="w-5 h-5" />
           </div>
         </div>
 
         {/* Card 3: Lucro Líquido */}
-        <div id="kpi-lucro" className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Lucro Líquido</p>
-            <p className={`text-2xl font-bold ${stats.netProfit >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+        <div id="kpi-lucro" className="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between min-w-0">
+          <div className="space-y-1 sm:space-y-2 min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Lucro Líquido</p>
+            <p className={`text-base sm:text-2xl font-black tracking-tight truncate ${stats.netProfit >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
               {formatCurrency(stats.netProfit)}
             </p>
-            <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full border ${
+            <span className={`inline-flex items-center text-[9px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full border truncate max-w-full ${
               stats.netProfit >= 0 
-                ? 'text-blue-600 bg-blue-50 border-blue-100' 
-                : 'text-rose-600 bg-rose-50 border-rose-100'
+                ? 'text-blue-650 bg-blue-50/70 border-blue-100' 
+                : 'text-rose-650 bg-rose-50/70 border-rose-100'
             }`}>
-              {stats.netProfit >= 0 ? 'Saldo Positivo' : 'Déficit Financeiro'}
+              <span className="truncate">{stats.netProfit >= 0 ? 'Saldo Positivo' : 'Déficit'}</span>
             </span>
           </div>
-          <div className={`p-3 rounded-lg border ${
+          <div className={`hidden sm:block p-3 rounded-lg border shrink-0 ${
             stats.netProfit >= 0 
               ? 'bg-blue-50 border-blue-100 text-blue-600' 
               : 'bg-rose-50 border-rose-100 text-rose-600'
           }`}>
-            <Briefcase className="w-6 h-6" />
+            <Briefcase className="w-5 h-5" />
           </div>
         </div>
 
         {/* Card 4: Margem de Lucro % */}
-        <div id="kpi-margem" className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Margem de Lucro %</p>
-            <p className={`text-2xl font-bold ${stats.profitMargin >= 30 ? 'text-emerald-600' : stats.profitMargin >= 15 ? 'text-amber-500' : 'text-red-600'}`}>
+        <div id="kpi-margem" className="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between min-w-0">
+          <div className="space-y-1 sm:space-y-2 min-w-0 w-full">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Margem de Lucro</p>
+            <p className={`text-base sm:text-2xl font-black tracking-tight truncate ${stats.profitMargin >= 30 ? 'text-emerald-600' : stats.profitMargin >= 15 ? 'text-amber-500' : 'text-red-600'}`}>
               {stats.profitMargin.toFixed(1)}%
             </p>
-            <div className="w-32 bg-slate-100 rounded-full h-1.5 mt-2">
+            <div className="w-full bg-slate-100 rounded-full h-1 mt-2">
               <div 
-                className={`h-1.5 rounded-full ${stats.profitMargin >= 30 ? 'bg-emerald-500' : stats.profitMargin >= 15 ? 'bg-amber-400' : 'bg-red-500'}`} 
+                className={`h-1 rounded-full ${stats.profitMargin >= 30 ? 'bg-emerald-500' : stats.profitMargin >= 15 ? 'bg-amber-400' : 'bg-red-500'}`} 
                 style={{ width: `${Math.max(0, Math.min(100, stats.profitMargin))}%` }}
               ></div>
             </div>
           </div>
-          <div className={`p-3 rounded-lg border ${
+          <div className={`hidden sm:block p-3 rounded-lg border shrink-0 ml-2 ${
             stats.profitMargin >= 30 
               ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
               : stats.profitMargin >= 15 
               ? 'bg-amber-50 border-amber-100 text-amber-500' 
               : 'bg-red-50 border-red-100 text-red-600'
           }`}>
-            <Percent className="w-6 h-6" />
+            <Percent className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -479,7 +479,8 @@ export default function Dashboard({ ledger, contracts }: DashboardProps) {
           </p>
         </div>
 
-        <div className="overflow-x-auto border border-slate-200 rounded-lg">
+        {/* Desktop Table view (Hidden on mobile) */}
+        <div className="hidden lg:block overflow-x-auto border border-slate-200 rounded-lg">
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <tr>
@@ -570,6 +571,139 @@ export default function Dashboard({ ledger, contracts }: DashboardProps) {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile card list view (Visible ONLY on mobile screens) */}
+        <div className="block lg:hidden space-y-4">
+          {contractProfitability.map((item) => (
+            <div key={item.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+              <div className="flex justify-between items-start gap-2">
+                <div>
+                  <div className="font-bold text-slate-800 text-sm">{item.name}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{item.description}</div>
+                </div>
+                <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                  item.margin >= 35 
+                    ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' 
+                    : item.margin >= 15 
+                    ? 'text-amber-700 bg-amber-50 border border-amber-100' 
+                    : 'text-rose-700 bg-rose-50 border border-rose-100'
+                }`}>
+                  {item.margin.toFixed(1)}%
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-150">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Receitas</span>
+                  <span className="font-bold text-emerald-600">{formatCurrency(item.revenue)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Lucro Líquido</span>
+                  <span className={`font-extrabold ${item.netProfit >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                    {formatCurrency(item.netProfit)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-lg border border-slate-150 space-y-1.5 text-xs">
+                <div className="flex justify-between text-slate-500 text-[11px]">
+                  <span>Funcionários:</span>
+                  <span className="font-medium text-slate-700">{formatCurrency(item.expEmployee)}</span>
+                </div>
+                <div className="flex justify-between text-slate-500 text-[11px]">
+                  <span>Impostos:</span>
+                  <span className="font-medium text-slate-700">{formatCurrency(item.expTax)}</span>
+                </div>
+                <div className="flex justify-between text-slate-500 text-[11px]">
+                  <span>NFs / Outros:</span>
+                  <span className="font-medium text-slate-700">{formatCurrency(item.expInvoice + item.expOther)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-slate-600 pt-1 border-t border-dashed border-slate-200 text-[11px]">
+                  <span>Total Despesas:</span>
+                  <span className="text-red-600">{formatCurrency(item.totalExpenses)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Loose Entries Card on Mobile */}
+          {(looseProfitability.revenue > 0 || looseProfitability.totalExpenses > 0) && (
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+              <div className="flex justify-between items-start gap-2">
+                <div>
+                  <div className="font-bold text-slate-700 text-sm italic">{looseProfitability.name}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">Lançamentos avulsos na planilha sem contrato</div>
+                </div>
+                <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                  looseProfitability.margin >= 35 
+                    ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' 
+                    : looseProfitability.margin >= 15 
+                    ? 'text-amber-700 bg-amber-50 border border-amber-100' 
+                    : 'text-rose-700 bg-rose-50 border border-rose-100'
+                }`}>
+                  {looseProfitability.margin.toFixed(1)}%
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-150">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Receitas</span>
+                  <span className="font-bold text-emerald-600">{formatCurrency(looseProfitability.revenue)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Lucro Líquido</span>
+                  <span className={`font-extrabold ${looseProfitability.netProfit >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                    {formatCurrency(looseProfitability.netProfit)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-lg border border-slate-150 space-y-1.5 text-xs">
+                <div className="flex justify-between text-slate-500 text-[11px]">
+                  <span>Funcionários:</span>
+                  <span className="font-medium text-slate-700">{formatCurrency(looseProfitability.expEmployee)}</span>
+                </div>
+                <div className="flex justify-between text-slate-500 text-[11px]">
+                  <span>Impostos:</span>
+                  <span className="font-medium text-slate-700">{formatCurrency(looseProfitability.expTax)}</span>
+                </div>
+                <div className="flex justify-between text-slate-500 text-[11px]">
+                  <span>NFs / Outros:</span>
+                  <span className="font-medium text-slate-700">{formatCurrency(looseProfitability.expInvoice + looseProfitability.expOther)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-slate-600 pt-1 border-t border-dashed border-slate-200 text-[11px]">
+                  <span>Total Despesas:</span>
+                  <span className="text-red-600">{formatCurrency(looseProfitability.totalExpenses)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Consolidated Summary Box for Mobile */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+            <div className="font-bold text-blue-900 text-sm">Total Consolidado</div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-blue-700 block text-[10px] uppercase font-bold">Faturamento Total</span>
+                <span className="font-bold text-emerald-600 text-sm">{formatCurrency(stats.revenue)}</span>
+              </div>
+              <div>
+                <span className="text-blue-700 block text-[10px] uppercase font-bold">Despesas Totais</span>
+                <span className="font-bold text-red-600 text-sm">{formatCurrency(stats.expense)}</span>
+              </div>
+              <div className="pt-2 border-t border-blue-200">
+                <span className="text-blue-700 block text-[10px] uppercase font-bold">Lucro Líquido</span>
+                <span className={`font-extrabold text-sm ${stats.netProfit >= 0 ? 'text-blue-700' : 'text-rose-700'}`}>
+                  {formatCurrency(stats.netProfit)}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-blue-200">
+                <span className="text-blue-700 block text-[10px] uppercase font-bold">Margem Líquida</span>
+                <span className="font-extrabold text-blue-700 text-sm">{stats.profitMargin.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -278,8 +278,8 @@ export default function ContractsSection({
 
       {/* MODAL: Cadastro & Edição de Contrato */}
       {isAddOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden my-auto">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
               <h3 className="text-base font-bold text-slate-800">
                 {isEditing ? 'Editar Contrato Fixo' : 'Cadastrar Novo Contrato Fixo'}
@@ -447,8 +447,8 @@ export default function ContractsSection({
 
       {/* MODAL: Confirmação de Provisionamento em Lote */}
       {isProvisionOpen && selectedContractForProvision && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-slate-200 overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-slate-200 overflow-hidden my-auto">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
               <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
