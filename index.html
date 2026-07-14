@@ -6,15 +6,40 @@
         try {
           var originalFetch = window.fetch;
           if (originalFetch) {
-            Object.defineProperty(window, 'fetch', {
-              value: originalFetch,
-              writable: true,
-              configurable: true,
-              enumerable: true
-            });
+            // Define safe getter/setter helper
+            var makeSafe = function(obj, prop) {
+              try {
+                Object.defineProperty(obj, prop, {
+                  get: function() { return originalFetch; },
+                  set: function(v) { console.warn('Ignored attempt to override fetch property:', v); },
+                  configurable: true,
+                  enumerable: true
+                });
+                return true;
+              } catch (err) {
+                return false;
+              }
+            };
+
+            // 1. Try on window directly
+            if (!makeSafe(window, 'fetch')) {
+              // 2. Try on prototypes
+              var targets = [
+                typeof Window !== 'undefined' ? Window.prototype : null,
+                window.constructor ? window.constructor.prototype : null,
+                Object.getPrototypeOf ? Object.getPrototypeOf(window) : null
+              ];
+              for (var i = 0; i < targets.length; i++) {
+                var target = targets[i];
+                if (target && makeSafe(target, 'fetch')) {
+                  console.info('Successfully patched fetch on prototype');
+                  break;
+                }
+              }
+            }
           }
         } catch (e) {
-          console.warn('Failed to make fetch writable:', e);
+          console.warn('Failed to define fetch property:', e);
         }
       })();
     </script>
