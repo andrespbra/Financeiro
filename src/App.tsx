@@ -5,7 +5,7 @@ import Dashboard from './components/Dashboard';
 import ContractsSection from './components/ContractsSection';
 import SpreadsheetView from './components/SpreadsheetView';
 import { motion, AnimatePresence } from 'motion/react';
-import { isSupabaseConfigured } from './lib/supabaseClient';
+import { getSupabaseConfig } from './lib/supabaseClient';
 import { supabaseService } from './lib/supabaseService';
 import {
   Briefcase,
@@ -44,6 +44,62 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
+  // Configuração dinâmica do banco de dados Supabase
+  const [dbConfig, setDbConfig] = useState(() => getSupabaseConfig());
+  const [inputUrl, setInputUrl] = useState('');
+  const [inputKey, setInputKey] = useState('');
+
+  // Sincronizar inputs quando as configurações ou o modal mudam
+  useEffect(() => {
+    if (dbConfig.source === 'local') {
+      setInputUrl(dbConfig.url);
+      setInputKey(dbConfig.key);
+    } else {
+      setInputUrl('');
+      setInputKey('');
+    }
+  }, [dbConfig, isConfigModalOpen]);
+
+  // Salvar configuração customizada no LocalStorage e conectar
+  const handleSaveCustomConfig = async () => {
+    const trimmedUrl = inputUrl.trim();
+    const trimmedKey = inputKey.trim();
+
+    if (!trimmedUrl || !trimmedKey) {
+      addToast('Preencha a URL e a Chave Anon Key do Supabase.', 'error');
+      return;
+    }
+
+    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+      addToast('A URL deve iniciar com http:// ou https://', 'error');
+      return;
+    }
+
+    try {
+      localStorage.setItem('custom_supabase_url', trimmedUrl);
+      localStorage.setItem('custom_supabase_anon_key', trimmedKey);
+      
+      const newConfig = getSupabaseConfig();
+      setDbConfig(newConfig);
+      
+      addToast('Conectando ao banco de dados Supabase...', 'info');
+    } catch (err) {
+      addToast('Falha ao salvar as configurações.', 'error');
+    }
+  };
+
+  const handleClearCustomConfig = () => {
+    localStorage.removeItem('custom_supabase_url');
+    localStorage.removeItem('custom_supabase_anon_key');
+    setInputUrl('');
+    setInputKey('');
+    
+    const newConfig = getSupabaseConfig();
+    setDbConfig(newConfig);
+    
+    addToast('Banco de dados customizado desconectado. Voltando ao Modo Local padrão.', 'info');
+  };
+
   // Aba ativa ('dashboard' | 'contracts' | 'spreadsheet')
   const [activeTab, setActiveTab] = useState<'dashboard' | 'contracts' | 'spreadsheet'>('dashboard');
 
@@ -65,7 +121,7 @@ export default function App() {
   // Carregar dados iniciais do Supabase se estiver configurado
   useEffect(() => {
     async function fetchDatabaseData() {
-      if (isSupabaseConfigured) {
+      if (dbConfig.isConfigured) {
         setIsLoading(true);
         try {
           const dbContracts = await supabaseService.getContracts();
@@ -73,17 +129,17 @@ export default function App() {
           
           setContracts(dbContracts);
           setLedger(dbLedger);
-          addToast('Dados sincronizados com o Supabase com sucesso!', 'success');
+          addToast(`Dados sincronizados com o Supabase (${dbConfig.source === 'local' ? 'Customizado' : 'Sistema'})!`, 'success');
         } catch (error) {
           console.warn('Falha ao carregar dados do Supabase:', error);
-          addToast('Não foi possível obter os dados do Supabase. Usando cache local do navegador.', 'error');
+          addToast('Não foi possível obter dados da nuvem. Verifique suas credenciais e tabelas.', 'error');
         } finally {
           setIsLoading(false);
         }
       }
     }
     fetchDatabaseData();
-  }, []);
+  }, [dbConfig]);
 
   // Salvar estados no LocalStorage quando mudarem (como backup / cache local instantâneo)
   useEffect(() => {
@@ -96,15 +152,15 @@ export default function App() {
 
   // Sincronizar cache local com o Supabase (Função manual no painel)
   const handleSyncToSupabase = async () => {
-    if (!isSupabaseConfigured) {
-      addToast('Supabase não configurado nas variáveis de ambiente!', 'error');
+    if (!dbConfig.isConfigured) {
+      addToast('Banco de dados em nuvem não configurado!', 'error');
       return;
     }
     setIsSyncing(true);
     try {
       const result = await supabaseService.syncLocalDataToSupabase(contracts, ledger);
       addToast(
-        `Sucesso! Sincronizados ${result.contractsSynced} contratos e ${result.ledgerSynced} lançamentos com o Supabase.`,
+        `Sucesso! Sincronizados ${result.contractsSynced} contratos e ${result.ledgerSynced} lançamentos com o seu Supabase.`,
         'success'
       );
       // Recarregar os dados para garantir consistência total
@@ -168,7 +224,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
   // --- HANDLERS PARA CONTRATOS ---
   const handleAddContract = async (newContract: Contract) => {
     setContracts((prev) => [newContract, ...prev]);
-    if (isSupabaseConfigured) {
+    if (dbConfig.isConfigured) {
       try {
         await supabaseService.saveContract(newContract);
         addToast(`Contrato "${newContract.name}" salvo com sucesso no Supabase!`, 'success');
@@ -191,7 +247,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
       )
     );
 
-    if (isSupabaseConfigured) {
+    if (dbConfig.isConfigured) {
       try {
         await supabaseService.saveContract(updatedContract);
         addToast(`Contrato "${updatedContract.name}" atualizado no Supabase!`, 'success');
@@ -209,7 +265,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
 
     if (window.confirm(`Tem certeza que deseja excluir o contrato "${contract.name}"?\nIsso NÃO apagará os lançamentos históricos que já foram salvos na planilha.`)) {
       setContracts((prev) => prev.filter((c) => c.id !== id));
-      if (isSupabaseConfigured) {
+      if (dbConfig.isConfigured) {
         try {
           await supabaseService.deleteContract(id);
           addToast(`Contrato "${contract.name}" removido do Supabase.`, 'info');
@@ -306,7 +362,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
 
     setLedger((prev) => [...newEntries, ...prev]);
 
-    if (isSupabaseConfigured) {
+    if (dbConfig.isConfigured) {
       try {
         for (const entry of newEntries) {
           await supabaseService.saveLedgerEntry(entry);
@@ -323,7 +379,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
   // --- HANDLERS PARA PLANILHA / LEDGER ---
   const handleAddEntry = async (newEntry: LedgerEntry) => {
     setLedger((prev) => [newEntry, ...prev]);
-    if (isSupabaseConfigured) {
+    if (dbConfig.isConfigured) {
       try {
         await supabaseService.saveLedgerEntry(newEntry);
         addToast('Lançamento registrado com sucesso no Supabase!', 'success');
@@ -337,7 +393,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
 
   const handleUpdateEntry = async (updatedEntry: LedgerEntry) => {
     setLedger((prev) => prev.map((item) => (item.id === updatedEntry.id ? updatedEntry : item)));
-    if (isSupabaseConfigured) {
+    if (dbConfig.isConfigured) {
       try {
         await supabaseService.saveLedgerEntry(updatedEntry);
         addToast('Lançamento atualizado com sucesso no Supabase!', 'success');
@@ -352,7 +408,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
   const handleDeleteEntry = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este lançamento financeiro da planilha?')) {
       setLedger((prev) => prev.filter((item) => item.id !== id));
-      if (isSupabaseConfigured) {
+      if (dbConfig.isConfigured) {
         try {
           await supabaseService.deleteLedgerEntry(id);
           addToast('Lançamento removido do Supabase.', 'info');
@@ -367,7 +423,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
 
   const handleImportLedger = async (importedEntries: LedgerEntry[]) => {
     setLedger((prev) => [...importedEntries, ...prev]);
-    if (isSupabaseConfigured) {
+    if (dbConfig.isConfigured) {
       try {
         for (const entry of importedEntries) {
           await supabaseService.saveLedgerEntry(entry);
@@ -383,7 +439,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
 
   const handleClearAllData = async () => {
     if (window.confirm('ATENÇÃO: Isso excluirá permanentemente TODOS os contratos e lançamentos do cache local do seu navegador! Deseja continuar?')) {
-      if (isSupabaseConfigured) {
+      if (dbConfig.isConfigured) {
         if (window.confirm('Você também gostaria de tentar remover estes dados do banco de dados conectado no Supabase? (Clique em "OK" para remover também do Supabase, ou "Cancelar" para limpar apenas localmente)')) {
           setIsLoading(true);
           try {
@@ -436,10 +492,10 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
             <div>
               <h1 className="text-xl font-bold tracking-tight text-slate-800 flex items-center gap-2">
                 Finansys <span className="text-blue-600">Enterprise</span>
-                {isSupabaseConfigured ? (
+                {dbConfig.isConfigured ? (
                   <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Supabase Nuvem
+                    Supabase {dbConfig.source === 'local' ? 'Custom' : 'Nuvem'}
                   </span>
                 ) : (
                   <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
@@ -522,11 +578,11 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
           <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
             <div className="text-[11px] font-bold text-slate-400 uppercase px-2">Nuvem & Banco</div>
             
-            {isSupabaseConfigured ? (
+            {dbConfig.isConfigured ? (
               <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-100 text-slate-800 space-y-2">
                 <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
                   <Database className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Supabase Ativo</span>
+                  <span>Supabase Ativo {dbConfig.source === 'local' && '(Custom)'}</span>
                 </div>
                 <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
                   Contratos e planilhas estão persistidos em nuvem no PostgreSQL do Supabase.
@@ -686,7 +742,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1">
           <p>© 2026 Finansys Enterprise - Sistema Integrado de Fluxo de Caixa.</p>
           <p>
-            {isSupabaseConfigured 
+            {dbConfig.isConfigured 
               ? 'Conectado de forma segura ao banco PostgreSQL no Supabase.' 
               : 'Dados operando localmente no navegador (LocalStorage). Prepare sua conexão do Supabase para salvar na nuvem.'}
           </p>
@@ -777,9 +833,9 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status da Conexão</span>
-                    {isSupabaseConfigured ? (
+                    {dbConfig.isConfigured ? (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                        Ativa (Nuvem)
+                        Ativa (Supabase - {dbConfig.source === 'local' ? 'Customizado' : 'Nuvem'})
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
@@ -788,10 +844,64 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                     )}
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    {isSupabaseConfigured 
-                      ? 'Parabéns! Sua aplicação está conectada ao Supabase e as alterações são gravadas instantaneamente na nuvem.'
-                      : 'Atualmente a aplicação salva dados no LocalStorage do seu navegador. Para persistir globalmente e compartilhar com seu time, siga as etapas abaixo.'}
+                    {dbConfig.isConfigured 
+                      ? `Sua aplicação está conectada com sucesso ao banco de dados Supabase (${dbConfig.source === 'local' ? 'via credenciais salvas no navegador' : 'via variáveis de ambiente'}). Todas as criações, edições e exclusões de contratos ou lançamentos serão compartilhadas instantaneamente!`
+                      : 'Atualmente a aplicação está em modo offline/local (salvando dados apenas no cache local deste navegador). Como cada aparelho possui seu próprio cache local, as alterações feitas no celular não aparecem no computador. Para sincronizar em tempo real em todos os seus aparelhos, insira as credenciais do seu projeto Supabase abaixo.'}
                   </p>
+                </div>
+
+                {/* CONEXÃO INTERATIVA RAPIDA */}
+                <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Database className="w-4 h-4 text-blue-600 shrink-0" />
+                    <h3 className="font-bold text-xs text-blue-900 uppercase tracking-wider">Conectar seu Supabase Instantaneamente</h3>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Insira as credenciais do seu projeto Supabase abaixo. Configure as **mesmas credenciais** no seu celular e no seu computador para sincronizá-los automaticamente!
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL do Projeto Supabase (Project URL)</label>
+                      <input
+                        type="url"
+                        value={inputUrl}
+                        onChange={(e) => setInputUrl(e.target.value)}
+                        placeholder="https://seu-id.supabase.co"
+                        className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Chave Anon Key (Project API anon public key)</label>
+                      <input
+                        type="password"
+                        value={inputKey}
+                        onChange={(e) => setInputKey(e.target.value)}
+                        placeholder="eyJhbGciOi..."
+                        className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      onClick={handleSaveCustomConfig}
+                      className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 shadow-sm shadow-blue-100"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      Salvar e Conectar
+                    </button>
+                    
+                    {dbConfig.source === 'local' && (
+                      <button
+                        onClick={handleClearCustomConfig}
+                        className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg font-semibold text-xs transition-all cursor-pointer border border-rose-100 flex items-center gap-1"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        Desconectar Banco Customizado
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* PASSO 1: SUPABASE */}
@@ -853,7 +963,7 @@ CREATE POLICY "Allow public delete on ledger_entries" ON ledger_entries FOR DELE
                 </div>
 
                 {/* SINCRONIZAÇÃO DE DADOS */}
-                {isSupabaseConfigured && (
+                {dbConfig.isConfigured && (
                   <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 space-y-3">
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />

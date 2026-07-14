@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { getSupabaseClient, getSupabaseConfig } from './supabaseClient';
 import { Contract, LedgerEntry } from '../types';
 
 // Helper to convert DB contract (snake_case) to Frontend contract (camelCase)
@@ -64,11 +64,12 @@ function mapLedgerEntryToDB(entry: LedgerEntry) {
 export const supabaseService = {
   // --- CONTRACTS SERVICES ---
   async getContracts(): Promise<Contract[]> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('contracts')
       .select('*')
       .order('created_at', { ascending: false });
@@ -82,12 +83,13 @@ export const supabaseService = {
   },
 
   async saveContract(contract: Contract): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
     const dbData = mapContractToDB(contract);
-    const { error } = await supabase
+    const { error } = await client
       .from('contracts')
       .upsert(dbData, { onConflict: 'id' });
 
@@ -98,11 +100,12 @@ export const supabaseService = {
   },
 
   async deleteContract(id: string): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { error } = await supabase
+    const { error } = await client
       .from('contracts')
       .delete()
       .eq('id', id);
@@ -115,11 +118,12 @@ export const supabaseService = {
 
   // --- LEDGER ENTRIES SERVICES ---
   async getLedgerEntries(): Promise<LedgerEntry[]> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('ledger_entries')
       .select('*')
       .order('date_launched', { ascending: false });
@@ -133,12 +137,13 @@ export const supabaseService = {
   },
 
   async saveLedgerEntry(entry: LedgerEntry): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
     const dbData = mapLedgerEntryToDB(entry);
-    const { error } = await supabase
+    const { error } = await client
       .from('ledger_entries')
       .upsert(dbData, { onConflict: 'id' });
 
@@ -149,11 +154,12 @@ export const supabaseService = {
   },
 
   async deleteLedgerEntry(id: string): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { error } = await supabase
+    const { error } = await client
       .from('ledger_entries')
       .delete()
       .eq('id', id);
@@ -165,11 +171,12 @@ export const supabaseService = {
   },
 
   async truncateLedgerEntries(): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { error } = await supabase
+    const { error } = await client
       .from('ledger_entries')
       .delete()
       .neq('id', '_none_');
@@ -181,11 +188,12 @@ export const supabaseService = {
   },
 
   async truncateContracts(): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { error } = await supabase
+    const { error } = await client
       .from('contracts')
       .delete()
       .neq('id', '_none_');
@@ -201,7 +209,8 @@ export const supabaseService = {
     contractsSynced: number;
     ledgerSynced: number;
   }> {
-    if (!isSupabaseConfigured || !supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
       throw new Error('Supabase is not configured.');
     }
 
@@ -211,7 +220,7 @@ export const supabaseService = {
     // Bulk upload contracts
     if (localContracts.length > 0) {
       const dbContracts = localContracts.map(mapContractToDB);
-      const { error: contractError } = await supabase
+      const { error: contractError } = await client
         .from('contracts')
         .upsert(dbContracts, { onConflict: 'id' });
 
@@ -225,7 +234,7 @@ export const supabaseService = {
     // Bulk upload ledger entries
     if (localLedger.length > 0) {
       const dbLedger = localLedger.map(mapLedgerEntryToDB);
-      const { error: ledgerError } = await supabase
+      const { error: ledgerError } = await client
         .from('ledger_entries')
         .upsert(dbLedger, { onConflict: 'id' });
 
